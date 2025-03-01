@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL shortner</title>
+</head>
+
+<body>
+  <form method="post" action="/url/">
+    <label for="url">Enter a URL:</label>
+    <input type="text" id="url" name="originalURL" required>
+    <button type="submit">Shorten</button>
+  </form>
+
+  <% if (Visits && Visits.shortURL) { %>
+    <h3>Your URL</h3>
+    <p>Original URL: <%= Visits.originalURL %>
+    </p>
+    <p>Shortened URL: <a href="/<%= Visits.shortURL %>" target="_blank">localhost:8090/<%= Visits.shortURL %>
+      </a></p>
+    <% } %>
+    <h3>Go to Analytics</h3>
+    <a href="/url/analytics/<%= Visits.shortURL %>"> Get Your Analytics</a>
+</body>
+
+</html>
