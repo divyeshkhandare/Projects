@@ -16,7 +16,7 @@ exports.hashPassword = async (password) => {
 };
 
 exports.comparePassword = async (hash, password) => {
-  return await bcrypt.compare(hash, password);
+  return await bcrypt.compare(password, hash);
 };
 
 exports.decode = async(token) => {
