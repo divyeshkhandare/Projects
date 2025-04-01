@@ -16,7 +16,7 @@ const Login = () => {
     if (cookie.get("token")) {
       nav("/", { replace: true });
     }
-  }, []);
+  }, [nav]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

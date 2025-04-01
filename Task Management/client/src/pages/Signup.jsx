@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import cookie from "js-cookie";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import API from "../config/API";
 
 const Signup = () => {
@@ -29,7 +29,7 @@ const Signup = () => {
 
   const createUser = async (data) => {
     try {
-      const res = await API.post("/signup", data);
+      const res = await API.post("/user/signup", data);
       const { token } = res.data;
       cookie.set("token", token, { expires: 1 });
       toast.success("Signup successful!", {
@@ -45,7 +45,7 @@ const Signup = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createUser(user);
+    createUser(user)
   };
 
   return (

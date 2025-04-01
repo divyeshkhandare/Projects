@@ -11,7 +11,9 @@ const OrderPage = () => {
     isError,
   } = useGetOrderByEmailQuery(currentUser.email);
   if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error geting orders data</div>;
+  if (isError) return <div>Error getting orders data</div>;
+
+  console.log("Orders fetched:", orders);
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">Your Orders</h2>

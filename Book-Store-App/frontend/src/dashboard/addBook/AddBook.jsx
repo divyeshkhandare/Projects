@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import InputField from './InputField'
 import SelectField from './SelectField'
 import { useForm } from 'react-hook-form';
-import { useAddBookMutation } from '/Divyesh FSd/Node/Project/frontend/src/redux/features/books/booksApi';
+
 import Swal from 'sweetalert2';
+import { useAddBookMutation } from '../../redux/features/books/booksApi';
 
 const AddBook = () => {
     const { register, handleSubmit, formState: { errors }, reset } = useForm();

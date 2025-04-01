@@ -4,11 +4,13 @@ import SelectField from "../addBook/SelectField";
 import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
 
-import Loading from "/Divyesh FSd/Node/Project/frontend/src/components/Loading";
+
 import Swal from "sweetalert2";
 import axios from "axios";
-import getBaseUrl from "/Divyesh FSd/Node/Project/frontend/src/utils/baseURL";
+
 import { useFetchBookByIdQuery, useUpdateBookMutation } from "../../redux/features/books/booksApi";
+import Loading from "../../components/Loading";
+import getBaseUrl from "../../utils/baseURL";
 
 const UpdateBook = () => {
   const { id } = useParams();

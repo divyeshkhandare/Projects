@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import logo from "/image.png";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   return (
@@ -16,9 +17,17 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="px-6 py-3 font-bold text-base text-[#4640DE] cursor-pointer">Login</button>
+          <Link to="/login">
+            <button className="px-6 py-3 font-bold text-base text-[#4640DE] cursor-pointer">
+              Login
+            </button>
+          </Link>
           <span className="w-[2px] h-12 bg-[#D6DDEB]"></span>
-          <button className="font-bold text-base px-6 py-3 bg-[#4640DE] text-white cursor-pointer">Sign Up</button>
+          <Link to="/signup">
+            <button className="font-bold text-base px-6 py-3 bg-[#4640DE] text-white cursor-pointer">
+              Sign Up
+            </button>
+          </Link>
         </div>
       </header>
     </div>

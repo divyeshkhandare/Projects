@@ -3,7 +3,7 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 
 const decodeToken = (req, res, next) => {
-  const publicRoutes = ["/user/login", "/user/register"];
+  const publicRoutes = ["/user/login", "/signup"];
   if (publicRoutes.includes(req.url)) {
     return next();
   }
