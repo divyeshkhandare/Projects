@@ -1,36 +1,67 @@
 const User = require("../models/user.model");
 
 exports.register = async (data) => {
-  const user = await User.create(data);
-  return user;
+  try {
+    const user = await User.create(data);
+    return user;
+  } catch (error) {
+    throw new Error(`Failed to register user: ${error.message}`);
+  }
 };
 
 exports.getUserByEmail = async (email) => {
-  const user = await User.findOne({ email: email });
-  return user;
+  try {
+    const user = await User.findOne({ email });
+    return user;
+  } catch (error) {
+    throw new Error(`Failed to get user by email: ${error.message}`);
+  }
 };
 
 exports.getUserById = async (id) => {
-  const user = await User.findById(id);
-  return user;
+  try {
+    const user = await User.findById(id);
+    return user;
+  } catch (error) {
+    throw new Error(`Failed to get user by ID: ${error.message}`);
+  }
 };
 
 exports.updateUser = async (id, user) => {
-  const updateUser = await User.findByIdAndUpdate(id, user, { new: true });
-  return updateUser;
+  try {
+    const updatedUser = await User.findByIdAndUpdate(id, user, { 
+      new: true,
+      runValidators: true 
+    });
+    return updatedUser;
+  } catch (error) {
+    throw new Error(`Failed to update user: ${error.message}`);
+  }
 };
 
 exports.deleteUser = async (id) => {
-  const user = await User.findByIdAndDelete(id);
-  return user;
+  try {
+    const user = await User.findByIdAndDelete(id);
+    return user;
+  } catch (error) {
+    throw new Error(`Failed to delete user: ${error.message}`);
+  }
 };
 
 exports.getAllUsers = async () => {
-  const user = await User.find();
-  return user;
+  try {
+    const users = await User.find();
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to get all users: ${error.message}`);
+  }
 };
 
 exports.getUserQuery = async (query) => {
-  const user = await User.find(query);
-  return user;
+  try {
+    const users = await User.find(query);
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to search users: ${error.message}`);
+  }
 };

@@ -1,154 +1,256 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { Link, useNavigate } from "react-router-dom";
-import { API } from "../config/api";
-import Cookie from "js-cookie";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  loginUser,
+  clearError,
+  clearFormErrors,
+} from "../store/slices/authSlice";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+const schema = yup.object().shape({
+  email: yup
+    .string()
+    .email("Invalid email format")
+    .required("Email is required"),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
+});
 
 const Login = () => {
   const nav = useNavigate();
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.auth);
+  const [showPassword, setShowPassword] = React.useState(false);
 
-  const [clicked, setClicked] = useState(false);
-
-  const [user, setUser] = useState({
-    email: "",
-    password: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
-  const handleChange = (e) => {
-    setUser({
-      ...user,
-      [e.target.name]: e.target.value,
-    });
-  };
+  useEffect(() => {
+    dispatch(clearError());
+    dispatch(clearFormErrors());
+    return () => reset();
+  }, [dispatch, reset]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setClicked(true);
+  const onSubmit = async (data) => {
     try {
-      let res = await API.post("/user/signin", user);
-      Cookie.set("token", res.data.token);
-      nav("/");
+      const result = await dispatch(loginUser(data));
+
+      if (result.payload) {
+        nav("/");
+      }
     } catch (error) {
-      console.log(error);
-      setClicked(false);
+      console.error("Login failed:", error);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8F8FD]">
       <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          duration: 0.3,
-        }}
-        className="min-h-screen flex items-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-[90%] sm:w-[408px] mx-auto flex flex-col justify-between p-4 sm:p-8 bg-white rounded-xl shadow-lg"
       >
-        <div className="w-[408px] h-[582px] mx-auto flex flex-col justify-between">
-          {/* Top Buttons */}
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-2xl sm:text-3xl font-semibold text-center text-[#25324B] mb-4 sm:mb-6"
+        >
+          Welcome Back
+        </motion.h1>
 
-          <h1 className="text-3xl font-semibold text-center ">
-            Welcome Back,Dude
-          </h1>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="w-full border border-[#CCCCF5] py-2.5 sm:py-3 text-[#4640DE] text-sm sm:text-base font-bold flex items-center justify-center gap-2 rounded-lg hover:bg-[#4640DE] hover:text-white transition-colors duration-300"
+        >
+          <FcGoogle className="text-lg sm:text-xl" /> Login with Google
+        </motion.button>
 
-          <button className="w-full border border-[#CCCCF5] py-3 text-[#4640DE] text-base font-bold flex items-center justify-center gap-2 mt-4">
-            <FcGoogle className="text-xl" /> Login with Google
-          </button>
-
-          <div className="flex items-center gap-3">
-            <span className="h-[1px] w-[20px] bg-[#D6DDEB] flex-1"></span>
-            <p className=" text-[#202430]">Or login with email</p>
-            <span className="h-[1px] w-[20px] bg-[#D6DDEB] flex-1"></span>
-          </div>
-
-          {/* Form */}
-          <div>
-            <form className="space-y-[22px]" onSubmit={handleSubmit}>
-              <div>
-                <label
-                  htmlFor="Email Address"
-                  className="block text-base font-semibold align-text-top text-[#515B6F] leading-7"
-                >
-                  Email Address
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your email address"
-                  className="px-[16px] py-[12px] border-[#D6DDEB] border w-full"
-                  name="email"
-                  value={user.email}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="Password"
-                  className="block text-base font-semibold align-text-top text-[#515B6F] leading-7"
-                >
-                  Password
-                </label>
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  className="px-[16px] py-[12px] border-[#D6DDEB] border w-full"
-                  name="password"
-                  value={user.password}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <motion.button
-                  whileHover={{
-                    scale: 1,
-                    transition: { duration: 0.3 },
-                  }}
-                  whileTap={{ scale: 0.8 }}
-                  className="bg-[#4640DE] py-[12px] px-[24px] text-white text-base font-bold w-full flex justify-center items-center gap-[20px] cursor-pointer"
-                  type="submit"
-                >
-                  {clicked ? (
-                    <motion.div
-                      className="w-6 h-6 border-4 border-white border-t-transparent rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }}
-                    />
-                  ) : (
-                    "Login"
-                  )}
-                </motion.button>
-              </div>
-              <div className="flex items-center mt-2">
-                <input
-                  type="checkbox"
-                  id="rememberMe"
-                  className="mr-2 w-4 h-4 accent-[#4640DE] cursor-pointer"
-                />
-                <label
-                  htmlFor="rememberMe"
-                  className="text-[#515B6F] text-base cursor-pointer"
-                >
-                  Remember Me
-                </label>
-              </div>
-            </form>
-          </div>
-          <p className="text-base">
-            Don't have an account?{" "}
-            <Link
-              to={"/signup"}
-              className="text-[#4640DE] font-semibold cursor-pointer"
-            >
-              Sign up
-            </Link>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="flex items-center gap-2 sm:gap-3 my-4 sm:my-6"
+        >
+          <span className="h-[1px] bg-[#D6DDEB] flex-1"></span>
+          <p className="text-[#202430] text-xs sm:text-sm">
+            Or login with email
           </p>
-        </div>
+          <span className="h-[1px] bg-[#D6DDEB] flex-1"></span>
+        </motion.div>
+
+        <form
+          className="space-y-4 sm:space-y-6"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <label
+              htmlFor="email"
+              className="block text-xs sm:text-sm font-medium text-[#25324B] mb-1"
+            >
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email address"
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border ${
+                errors.email ? "border-red-500" : "border-[#D6DDEB]"
+              } focus:outline-none focus:ring-2 focus:ring-[#4640DE] transition-all duration-300 text-sm sm:text-base`}
+              {...register("email")}
+            />
+            {errors.email && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs sm:text-sm mt-1"
+              >
+                {errors.email.message}
+              </motion.p>
+            )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <label
+              htmlFor="password"
+              className="block text-xs sm:text-sm font-medium text-[#25324B] mb-1"
+            >
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                placeholder="Enter your password"
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg border ${
+                  errors.password ? "border-red-500" : "border-[#D6DDEB]"
+                } focus:outline-none focus:ring-2 focus:ring-[#4640DE] transition-all duration-300 text-sm sm:text-base`}
+                {...register("password")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-300"
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
+            {errors.password && (
+              <motion.p
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs sm:text-sm mt-1"
+              >
+                {errors.password.message}
+              </motion.p>
+            )}
+          </motion.div>
+
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-red-500 text-xs sm:text-sm text-center"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-[#4640DE] py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg flex justify-center items-center gap-2 hover:bg-[#3a35c0] transition-colors duration-300"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? (
+              <motion.div
+                className="w-5 h-5 sm:w-6 sm:h-6 border-4 border-white border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              />
+            ) : (
+              "Login"
+            )}
+          </motion.button>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 1 }}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                className="w-3.5 h-3.5 sm:w-4 sm:h-4 accent-[#4640DE] cursor-pointer"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 text-xs sm:text-sm text-[#25324B] cursor-pointer"
+              >
+                Remember Me
+              </label>
+            </div>
+            <Link
+              to="/forgot-password"
+              className="text-xs sm:text-sm text-[#4640DE] hover:underline transition-colors duration-300"
+            >
+              Forgot Password?
+            </Link>
+          </motion.div>
+        </form>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1.2 }}
+          className="text-center text-xs sm:text-sm text-[#25324B] mt-4 sm:mt-6"
+        >
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            className="text-[#4640DE] font-semibold hover:underline transition-colors duration-300"
+          >
+            Sign Up
+          </Link>
+        </motion.p>
       </motion.div>
-    </>
+    </div>
   );
 };
 

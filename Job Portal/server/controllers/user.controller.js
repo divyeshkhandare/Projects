@@ -2,76 +2,128 @@ const userService = require("../service/user.service");
 
 exports.signupUser = async (req, res) => {
   try {
-    const user = await userService.createUser(req.body);
-    return res.send({ token: user });
+    const token = await userService.createUser(req.body);
+    return res.status(201).json({ 
+      success: true,
+      message: "User registered successfully",
+      token 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.loginUser = async (req, res) => {
   try {
-    let token = await userService.login(req.body);
-    return res.send({ token: token });
+    const token = await userService.login(req.body);
+    return res.status(200).json({ 
+      success: true,
+      message: "Login successful",
+      token 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(401).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.updateUser = async (req, res) => {
-  let { userId } = req.params;
+  const { userId } = req.params;
   try {
-    let user = await userService.updateUser(userId, req.body);
-    return res.send(user);
+    const user = await userService.updateUser(userId, req.body);
+    return res.status(200).json({ 
+      success: true,
+      message: "User updated successfully",
+      data: user 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.deleteUser = async (req, res) => {
-  let { userId } = req.params;
+  const { userId } = req.params;
   try {
-    let user = await userService.deleteUser(userId);
-    return res.send(user);
+    const user = await userService.deleteUser(userId);
+    return res.status(200).json({ 
+      success: true,
+      message: "User deleted successfully",
+      data: user 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.getUserById = async (req, res) => {
-  let { userId } = req.params;
+  const { userId } = req.params;
   try {
-    let user = await userService.getUserById(userId);
-    return res.send(user);
+    const user = await userService.getUserById(userId);
+    return res.status(200).json({ 
+      success: true,
+      data: user 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(404).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.getAllUsers = async (req, res) => {
   try {
-    let user = await userService.getAllUsers();
-    return res.send(user);
+    const users = await userService.getAllUsers();
+    return res.status(200).json({ 
+      success: true,
+      data: users 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.findUsersByQuery = async (req, res) => {
   try {
-    let user = await userService.UserByQuery(req.query);
-    return res.send(user);
+    const users = await userService.UserByQuery(req.query);
+    return res.status(200).json({ 
+      success: true,
+      data: users 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };
 
 exports.emailVerification = async (req, res) => {
   const { token, otp } = req.params;
   try {
-    let user = await userService.sendmail(token, otp);
-    return res.send({ message: "User verified successfully" });
+    await userService.sendmail(token, otp);
+    return res.status(200).json({ 
+      success: true,
+      message: "Email verified successfully" 
+    });
   } catch (error) {
-    return res.status(404).send({ message: error.message });
+    return res.status(400).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 };

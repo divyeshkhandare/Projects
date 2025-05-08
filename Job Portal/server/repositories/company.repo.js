@@ -1,26 +1,49 @@
 const Company = require("../models/company.model");
 
 exports.createCompany = async (payload) => {
-  const company = await Company.create(payload);
-  return company;
+  try {
+    const company = await Company.create(payload);
+    return company;
+  } catch (error) {
+    throw new Error(`Failed to create company: ${error.message}`);
+  }
 };
 
-exports.getAllCompany = async () => {
-  const company = await Company.find();
-  return company;
+exports.getAllCompany = async (query = {}) => {
+  try {
+    const companies = await Company.find(query);
+    return companies;
+  } catch (error) {
+    throw new Error(`Failed to get companies: ${error.message}`);
+  }
 };
 
 exports.deleteCompany = async (id) => {
-  const company = await Company.findByIdAndDelete(id);
-  return company;
+  try {
+    const company = await Company.findByIdAndDelete(id);
+    return company;
+  } catch (error) {
+    throw new Error(`Failed to delete company: ${error.message}`);
+  }
 };
 
 exports.updateCompany = async (id, payload) => {
-  const company = await Company.findByIdAndUpdate(id, payload, { new: true });
-  return company;
-}
+  try {
+    const company = await Company.findByIdAndUpdate(id, payload, { 
+      new: true,
+      runValidators: true 
+    });
+    return company;
+  } catch (error) {
+    throw new Error(`Failed to update company: ${error.message}`);
+  }
+};
 
 exports.getCompanyById = async (id) => {
-  const company = await Company.findById(id);
-  return company;
-}
+  try {
+    const company = await Company.findById(id);
+    return company;
+  } catch (error) {
+    throw new Error(`Failed to get company: ${error.message}`);
+  }
+};

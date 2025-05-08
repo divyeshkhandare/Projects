@@ -8,104 +8,136 @@ const {
 const sendMail = require("../utils/mail");
 const userDetailsService = require("./userDetails.service");
 
-let map = new Map();
+// Store OTPs in memory (consider using Redis in production)
+const otpMap = new Map();
 
 exports.createUser = async (data) => {
-  let user = await userRepo.getUserByEmail(data.email);
-  if (user) {
-    throw new Error("User already exists!");
+  try {
+    const existingUser = await userRepo.getUserByEmail(data.email);
+    if (existingUser) {
+      throw new Error("User already exists!");
+    }
+
+    const hash = await hashPassword(data.password);
+    data.password = hash;
+
+    const user = await userRepo.register(data);
+
+    const token = await generateToken({
+      name: user.name,
+      email: user.email,
+      id: user.id,
+      role: user.role,
+    });
+
+    const otp = Math.round(1000 + Math.random() * 8999);
+    otpMap.set(token, otp);
+
+    const verificationLink = `http://localhost:8090/api/v1/user/verify/${token}/${otp}`;
+    const html = `<div><a href="${verificationLink}">Click to verify</a></div>`;
+    
+    await sendMail(user.email, "Verification Email", html);
+    return token;
+  } catch (error) {
+    throw new Error(`Failed to create user: ${error.message}`);
   }
-  const hash = await hashPassword(data.password);
-  data.password = hash;
-
-  user = await userRepo.register(data);
-
-  let token = await generateToken({
-    name: user.name,
-    email: user.email,
-    id: user.id,
-    role: user.role,
-  });
-
-  let otp = Math.round(1000 + Math.random() * 8999);
-  map.set(token, otp);
-  let html = `<div> <a href=http://localhost:8090/api/v1/user/verify/${token}/${otp} > click to verify </a> </div>`;
-  await sendMail(user.email, "Verification Email", html);
-  return token;
 };
 
 exports.login = async (data) => {
-  const user = await userRepo.getUserByEmail(data.email);
-  if (!user) {
-    throw new Error("User does not exists");
-  }
-  const isValid = await comparePassword(user.password,data.password);
-  if (!isValid) {
-    throw new Error("Invalid Password");
-  }
-  const token = await generateToken({
-    email: user.email,
-    name: user.name,
-    id: user.id,
-    role: user.role,
-  });
+  try {
+    const user = await userRepo.getUserByEmail(data.email);
+    if (!user) {
+      throw new Error("User does not exist");
+    }
 
-  return token;
+    const isValid = await comparePassword(user.password, data.password);
+    if (!isValid) {
+      throw new Error("Invalid password");
+    }
+
+    const token = await generateToken({
+      email: user.email,
+      name: user.name,
+      id: user.id,
+      role: user.role,
+    });
+
+    return token;
+  } catch (error) {
+    throw new Error(`Login failed: ${error.message}`);
+  }
 };
 
 exports.updateUser = async (id, data) => {
-  let user = await userRepo.getUserById(id);
-  if (!user) {
-    throw new Error("Invalid User ID!!");
-  }
+  try {
+    const user = await userRepo.getUserById(id);
+    if (!user) {
+      throw new Error("Invalid user ID");
+    }
 
-  user = await userRepo.updateUser(id, data);
-  return user;
+    const updatedUser = await userRepo.updateUser(id, data);
+    return updatedUser;
+  } catch (error) {
+    throw new Error(`Failed to update user: ${error.message}`);
+  }
 };
 
 exports.deleteUser = async (id) => {
-  let user = await userRepo.getUserById(id);
-  if (!user) {
-    throw new Error("Invalid User ID!!");
+  try {
+    const user = await userRepo.getUserById(id);
+    if (!user) {
+      throw new Error("Invalid user ID");
+    }
+
+    const deletedUser = await userRepo.deleteUser(id);
+    return deletedUser;
+  } catch (error) {
+    throw new Error(`Failed to delete user: ${error.message}`);
   }
-  user = await userRepo.deleteUser(id);
-  return user;
 };
 
 exports.getUserById = async (id) => {
-  let user = await userRepo.getUserById(id);
-  let userDetails = await userDetailsService.getById(id);
-  console.log(userDetails);
-  if (!user) {
-    throw new Error("Invalid User ID!!");
+  try {
+    const user = await userRepo.getUserById(id);
+    if (!user) {
+      throw new Error("Invalid user ID");
+    }
+
+    const userDetails = await userDetailsService.getById(id);
+    return { user, userDetails };
+  } catch (error) {
+    throw new Error(`Failed to get user: ${error.message}`);
   }
-  return {
-    user,
-    userDetails,
-  };
 };
 
 exports.getAllUsers = async () => {
-  let user = await userRepo.getAllUsers();
-  return user;
+  try {
+    const users = await userRepo.getAllUsers();
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to get users: ${error.message}`);
+  }
 };
 
 exports.UserByQuery = async (query) => {
-  let user = await userRepo.getUserQuery(query);
-  return user;
+  try {
+    const users = await userRepo.getUserQuery(query);
+    return users;
+  } catch (error) {
+    throw new Error(`Failed to search users: ${error.message}`);
+  }
 };
 
 exports.sendmail = async (token, otp) => {
- try {
-   let OTP = map.get(token)
-   if (OTP === otp) {
-     let user = await decode(token);
-     let updateUser = await userRepo.updateUser(user.id, { isVerified: true });
-     return updateUser;
-   } else {
-     return "Invalid OTP";
-   }
- } catch (error) {
-    throw new Error("Unable to verify user", error);
- }
-}
+  try {
+    const storedOTP = otpMap.get(token);
+    if (storedOTP === otp) {
+      const user = await decode(token);
+      const updatedUser = await userRepo.updateUser(user.id, { isVerified: true });
+      return updatedUser;
+    }
+    throw new Error("Invalid OTP");
+  } catch (error) {
+    throw new Error(`Verification failed: ${error.message}`);
+  }
+};

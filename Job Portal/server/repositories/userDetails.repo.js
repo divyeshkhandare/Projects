@@ -1,18 +1,31 @@
 const UserDetails = require("../models/userDetails.model");
 
 exports.getByUserId = async (userId) => {
-  let userDetails = await UserDetails.findOne({ user: userId });
-  return userDetails;
+  try {
+    const userDetails = await UserDetails.findOne({ user: userId });
+    return userDetails;
+  } catch (error) {
+    throw new Error(`Failed to get user details: ${error.message}`);
+  }
 };
 
 exports.updateUserDetails = async (userId, payload) => {
-  const userDetails = await UserDetails.findByIdAndUpdate(userId, payload, {
-    new: true,
-  });
-  return userDetails;
+  try {
+    const userDetails = await UserDetails.findByIdAndUpdate(userId, payload, {
+      new: true,
+      runValidators: true
+    });
+    return userDetails;
+  } catch (error) {
+    throw new Error(`Failed to update user details: ${error.message}`);
+  }
 };
 
 exports.createUserDetails = async (payload) => {
-  const userDetails = await UserDetails.create(payload);
-  return userDetails;
+  try {
+    const userDetails = await UserDetails.create(payload);
+    return userDetails;
+  } catch (error) {
+    throw new Error(`Failed to create user details: ${error.message}`);
+  }
 };

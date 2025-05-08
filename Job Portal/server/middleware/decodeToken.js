@@ -1,27 +1,62 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
+const PUBLIC_ROUTES = [
+  "/user/signup",
+  "/user/signin",
+  "/user/verify"
+];
+
 const decodeToken = async (req, res, next) => {
-  const publicRoutes = ["/user/signup", "/user/signin"];
-  let url = req.url;
-  if (url.includes("/user/verify")) {
-    return next();
-  }
-  if (publicRoutes.includes(req.url)) {
-    return next();
-  }
-  let token = req.headers["authorization"];
-  if (token) {
+  try {
+    // Check if route is public
+    const isPublicRoute = PUBLIC_ROUTES.some(route => req.url.startsWith(route));
+    if (isPublicRoute) {
+      return next();
+    }
+
+    // Get and validate token
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: "No authorization token provided"
+      });
+    }
+
+    // Extract and verify token
+    const [bearer, token] = authHeader.split(" ");
+    if (bearer !== "Bearer" || !token) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid authorization format. Use 'Bearer <token>'"
+      });
+    }
+
     try {
-      token = token.split(" ")[1];
-      let decode = await jwt.verify(token, process.env.JWT_KEY);
-      req.user = decode;
+      const decoded = await jwt.verify(token, process.env.JWT_KEY);
+      req.user = decoded;
       next();
     } catch (error) {
-      return res.status(403).send({ message: error.message });
+      if (error.name === "TokenExpiredError") {
+        return res.status(401).json({
+          success: false,
+          message: "Token has expired"
+        });
+      }
+      if (error.name === "JsonWebTokenError") {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid token"
+        });
+      }
+      throw error;
     }
-  } else {
-    return res.status(403).send({ message: "Invalid authorization token." });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error during authentication"
+    });
   }
 };
 

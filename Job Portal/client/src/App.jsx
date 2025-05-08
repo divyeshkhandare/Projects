@@ -7,7 +7,7 @@ import { useLocation } from "react-router-dom";
 const App = () => {
   const location = useLocation();
 
-  const noNavbar = ["/login", "/signup"];
+  const noNavbar = ["/login", "/signup", "/forgot-password"];
 
   return (
     <div>
