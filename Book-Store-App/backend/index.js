@@ -12,6 +12,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "https://bookstore-oj0jq0grp-divyesh-khandares-projects.vercel.app"
     ],
     credentials: true,
   })
