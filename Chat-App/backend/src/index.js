@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://projects-one-phi.vercel.app"],
+    origin: ["http://localhost:5173", "https://simple-chat-app-on.vercel.app"],
     credentials: true,
   })
 );

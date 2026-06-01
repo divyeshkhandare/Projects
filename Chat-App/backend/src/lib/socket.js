@@ -7,7 +7,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://projects-one-phi.vercel.app"],
+    origin: ["http://localhost:5173", "https://simple-chat-app-on.vercel.app"],
     credentials: true,
   },
 });
@@ -20,11 +20,11 @@ export function getReceiverSocketId(userId) {
 const userSocketMap = {}
 
 
-io.on("connection", (socket)=>{
+io.on("connection", (socket) => {
   console.log("User connected", socket.id);
 
   const userId = socket.handshake.query.userId
-  if(userId) userSocketMap[userId] = socket.id;
+  if (userId) userSocketMap[userId] = socket.id;
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
