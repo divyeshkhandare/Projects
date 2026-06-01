@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+
+RUN addgroup --system sandbox && adduser --system --ingroup sandbox sandbox
+WORKDIR /sandbox
+RUN chown sandbox:sandbox /sandbox
+USER sandbox
+
+# Disable pip network access in sandbox
+ENV PIP_NO_INDEX=1

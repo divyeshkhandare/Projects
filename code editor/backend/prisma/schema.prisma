@@ -1,0 +1,325 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CodeForge — Prisma Database Schema
+// PostgreSQL + Prisma ORM
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum OAuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
+
+enum ProjectVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum CollaborationPermission {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  ERROR
+  TIMEOUT
+}
+
+enum ChallengeStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+enum SubmissionStatus {
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILE_ERROR
+  PENDING
+}
+
+enum Language {
+  javascript
+  typescript
+  python
+  java
+  c
+  cpp
+  csharp
+  go
+  php
+  ruby
+  rust
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  username        String         @unique
+  name            String
+  avatar          String?
+  bio             String?
+  role            Role           @default(USER)
+  oauthProvider   OAuthProvider  @default(LOCAL)
+  oauthId         String?
+  passwordHash    String?
+  refreshToken    String?
+  resetToken      String?
+  resetTokenExpiry DateTime?
+  emailVerified   Boolean        @default(false)
+  isActive        Boolean        @default(true)
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  projects        Project[]
+  collaborations  Collaboration[]
+  executions      Execution[]
+  submissions     Submission[]
+  activityLogs    ActivityLog[]
+  snippets        Snippet[]
+
+  @@index([email])
+  @@index([username])
+  @@map("users")
+}
+
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+model Project {
+  id           String             @id @default(uuid())
+  userId       String
+  name         String
+  description  String?
+  language     Language           @default(javascript)
+  visibility   ProjectVisibility  @default(PRIVATE)
+  isTemplate   Boolean            @default(false)
+  forkCount    Int                @default(0)
+  starCount    Int                @default(0)
+  forkedFromId String?
+  settings     Json               @default("{}")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  // Relations
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  forkedFrom     Project?        @relation("ProjectForks", fields: [forkedFromId], references: [id])
+  forks          Project[]       @relation("ProjectForks")
+  files          File[]
+  collaborations Collaboration[]
+  executions     Execution[]
+  activityLogs   ActivityLog[]
+
+  @@index([userId])
+  @@index([visibility])
+  @@map("projects")
+}
+
+// ─── Files ────────────────────────────────────────────────────────────────────
+
+model File {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String
+  path      String   // relative path, e.g. "src/main.py"
+  content   String   @default("")
+  language  Language @default(javascript)
+  size      Int      @default(0)
+  isFolder  Boolean  @default(false)
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   File?    @relation("FileTree", fields: [parentId], references: [id])
+  children File[]   @relation("FileTree")
+
+  @@unique([projectId, path])
+  @@index([projectId])
+  @@map("files")
+}
+
+// ─── Collaborations ───────────────────────────────────────────────────────────
+
+model Collaboration {
+  id         String                  @id @default(uuid())
+  projectId  String
+  userId     String
+  permission CollaborationPermission @default(VIEWER)
+  invitedBy  String?
+  acceptedAt DateTime?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("collaborations")
+}
+
+// ─── Executions ───────────────────────────────────────────────────────────────
+
+model Execution {
+  id          String          @id @default(uuid())
+  projectId   String?
+  userId      String?
+  language    Language
+  code        String
+  stdin       String?
+  stdout      String?
+  stderr      String?
+  exitCode    Int?
+  status      ExecutionStatus @default(PENDING)
+  durationMs  Int?
+  memoryUsed  Int?
+  createdAt   DateTime        @default(now())
+
+  // Relations
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("executions")
+}
+
+// ─── Challenges ───────────────────────────────────────────────────────────────
+
+model Challenge {
+  id           String          @id @default(uuid())
+  title        String
+  slug         String          @unique
+  description  String
+  difficulty   Difficulty      @default(EASY)
+  status       ChallengeStatus @default(DRAFT)
+  language     Language        @default(javascript)
+  starterCode  String          @default("")
+  solutionCode String?
+  testCases    Json            @default("[]")
+  tags         String[]        @default([])
+  points       Int             @default(10)
+  timeLimit    Int             @default(5000) // ms
+  memoryLimit  Int             @default(256)  // MB
+  authorId     String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  submissions Submission[]
+
+  @@index([difficulty])
+  @@index([status])
+  @@map("challenges")
+}
+
+// ─── Submissions ──────────────────────────────────────────────────────────────
+
+model Submission {
+  id           String           @id @default(uuid())
+  userId       String
+  challengeId  String
+  language     Language
+  code         String
+  status       SubmissionStatus @default(PENDING)
+  passedTests  Int              @default(0)
+  totalTests   Int              @default(0)
+  score        Int              @default(0)
+  durationMs   Int?
+  memoryUsed   Int?
+  testResults  Json             @default("[]")
+  createdAt    DateTime         @default(now())
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+  @@map("submissions")
+}
+
+// ─── Activity Logs ────────────────────────────────────────────────────────────
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  projectId  String?
+  action     String   // e.g. "PROJECT_CREATE", "FILE_EDIT", "CODE_RUN"
+  resource   String?
+  metadata   Json     @default("{}")
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+// ─── Code Snippets ────────────────────────────────────────────────────────────
+
+model Snippet {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  code        String
+  language    Language
+  isPublic    Boolean  @default(false)
+  tags        String[] @default([])
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isPublic])
+  @@map("snippets")
+}

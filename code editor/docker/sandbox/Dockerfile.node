@@ -1,0 +1,12 @@
+FROM node:20-alpine
+
+# Create sandbox user (non-root)
+RUN addgroup -S sandbox && adduser -S sandbox -G sandbox
+
+WORKDIR /sandbox
+RUN chown sandbox:sandbox /sandbox
+
+USER sandbox
+
+# Pre-install ts-node for TypeScript support
+RUN npm install -g ts-node typescript 2>/dev/null || true

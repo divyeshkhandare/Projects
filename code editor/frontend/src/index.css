@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Variables ────────────────────────────────────────────────────────── */
+:root {
+  --editor-bg: #0d1117;
+  --editor-surface: #161b22;
+  --editor-border: #30363d;
+  --editor-accent: #388bfd;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-track: #161b22;
+}
+
+/* ── Base Styles ──────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--editor-bg);
+  color: #c9d1d9;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Custom Scrollbars ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #484f58;
+}
+
+/* ── Selection ────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(56, 139, 253, 0.25);
+  color: inherit;
+}
+
+/* ── Focus Styles ─────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--editor-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Component Layer ──────────────────────────────────────────────────────── */
+@layer components {
+  /* Glass card */
+  .glass-card {
+    @apply bg-editor-surface/80 backdrop-blur-sm border border-editor-border rounded-xl;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 
+           text-white font-medium rounded-lg transition-all duration-200 
+           hover:shadow-glow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Secondary/ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-editor-text 
+           hover:bg-editor-highlight rounded-lg transition-all duration-200 
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Danger button */
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-danger-600 hover:bg-danger-500 
+           text-white font-medium rounded-lg transition-all duration-200 active:scale-95;
+  }
+
+  /* Input field */
+  .input-field {
+    @apply w-full px-3 py-2 bg-editor-bg border border-editor-border rounded-lg
+           text-editor-text placeholder-editor-muted
+           focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/30
+           transition-colors duration-200;
+  }
+
+  /* Sidebar item */
+  .sidebar-item {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer
+           hover:bg-editor-highlight text-editor-text text-sm
+           transition-colors duration-150;
+  }
+
+  /* Tab button */
+  .tab-btn {
+    @apply flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium
+           border-b-2 border-transparent text-editor-muted
+           hover:text-editor-text transition-colors duration-150;
+  }
+  .tab-btn.active {
+    @apply border-brand-500 text-editor-text;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-blue   { @apply badge bg-brand-900/60 text-brand-300 border border-brand-700/50; }
+  .badge-green  { @apply badge bg-success-500/10 text-success-400 border border-success-500/20; }
+  .badge-orange { @apply badge bg-warning-500/10 text-warning-400 border border-warning-500/20; }
+  .badge-red    { @apply badge bg-danger-500/10 text-danger-400 border border-danger-500/20; }
+  .badge-gray   { @apply badge bg-editor-highlight text-editor-muted border border-editor-border; }
+
+  /* Code block */
+  .code-block {
+    @apply font-mono text-sm bg-editor-bg border border-editor-border rounded-lg p-4
+           overflow-x-auto text-editor-text;
+  }
+
+  /* Spinner */
+  .spinner {
+    @apply w-5 h-5 border-2 border-editor-border border-t-brand-500 rounded-full animate-spin;
+  }
+
+  /* Divider */
+  .divider {
+    @apply w-full h-px bg-editor-border;
+  }
+
+  /* Tooltip wrapper */
+  .tooltip-target {
+    @apply relative;
+  }
+
+  /* Panel section title */
+  .panel-title {
+    @apply text-xs font-semibold uppercase tracking-wider text-editor-muted px-3 py-2;
+  }
+}
+
+/* ── Monaco Editor Overrides ──────────────────────────────────────────────── */
+.monaco-editor {
+  border-radius: 0 !important;
+}
+.monaco-editor .margin {
+  background-color: var(--editor-bg) !important;
+}
+.monaco-editor-background {
+  background-color: var(--editor-bg) !important;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
+.animate-slide-up { animation: slideUp 0.3s ease-out; }
+
+/* Skeleton loading shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #161b22 25%, #1f2937 50%, #161b22 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* ── Landing Page Gradient ────────────────────────────────────────────────── */
+.hero-glow {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.15), transparent);
+}
+
+/* ── Split panels ─────────────────────────────────────────────────────────── */
+.split-panel {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Terminal-style output ────────────────────────────────────────────────── */
+.terminal-output {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #c9d1d9;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.terminal-output .stdout { color: #c9d1d9; }
+.terminal-output .stderr { color: #f87171; }
+.terminal-output .info   { color: #60a5fa; }
+.terminal-output .success{ color: #4ade80; }
+
+/* ── File tree ────────────────────────────────────────────────────────────── */
+@layer components {
+  .file-tree-item {
+    @apply flex items-center gap-1.5 px-2 py-0.5 cursor-pointer rounded text-sm
+           text-editor-muted hover:text-editor-text hover:bg-editor-highlight
+           transition-colors duration-100;
+  }
+  .file-tree-item.active {
+    @apply bg-brand-900/30 text-brand-300;
+  }
+}
+
+/* ── Diff viewer ──────────────────────────────────────────────────────────── */
+.diff-added   { background-color: rgba(74,222,128,0.08); }
+.diff-removed { background-color: rgba(248,113,113,0.08); }
+
+/* ── Cursor colors for collaboration ──────────────────────────────────────── */
+.collab-cursor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 2px;
+  height: 100%;
+  background: var(--cursor-color, #60a5fa);
+}

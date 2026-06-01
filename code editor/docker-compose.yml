@@ -1,0 +1,99 @@
+version: '3.9'
+
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: codeforge_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-codeforge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-codeforge_secret}
+      POSTGRES_DB: ${DB_NAME:-codeforge}
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-codeforge}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (sessions, caching, pub/sub) ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: codeforge_redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend API ───────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: codeforge_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${DB_USER:-codeforge}:${DB_PASSWORD:-codeforge_secret}@postgres:5432/${DB_NAME:-codeforge}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      PORT: 4000
+    ports:
+      - '4000:4000'
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker for sandbox
+      - uploads_data:/app/uploads
+    networks:
+      - codeforge_net
+
+  # ─── Frontend Dev Server ───────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: codeforge_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+      VITE_SOCKET_URL: ${VITE_SOCKET_URL:-http://localhost:4000}
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - codeforge_net
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+
+networks:
+  codeforge_net:
+    driver: bridge
